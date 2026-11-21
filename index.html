@@ -180,9 +180,11 @@ var k=Math.max(best[0],best[1],best[2]);if(k<200){var f=200/Math.max(k,1);best=b
 setCols(hex(R/n*.3,G/n*.3,B/n*.3),hex(best[0],best[1],best[2]),'#ffffff')};
 $('f').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var i=new Image();i.onload=function(){o.img=i;$('dz').textContent='已載入：'+f.name;draw()};i.src=r.result};r.readAsDataURL(f)});
 var DL=null;
-if(window.claude&&claude.use)claude.use('downloads').then(function(d){DL=d;if(!d)$('dlh').textContent='此環境無法直接下載，請長按圖片儲存。'}).catch(function(){});
+if(window.claude&&claude.use)claude.use('downloads').then(function(d){DL=d}).catch(function(){});
 function shot(g,nm){var c=document.createElement('canvas');c.width=1080;c.height=1920;render(c.getContext('2d'),g,1);var w=document.createElement('div');w.className='oi';var im=new Image();im.src=c.toDataURL('image/png');var b=document.createElement('button');b.className='p dl';b.textContent='下載 PNG';var m=document.createElement('div');m.className='hint';
-b.onclick=function(){if(!DL){m.textContent='此環境無法下載，請長按圖片儲存';return}b.disabled=true;c.toBlob(function(bl){DL.save({filename:'story-'+nm+'.png',data:bl}).then(function(){m.textContent='已儲存'},function(e){m.textContent=e&&e.code=='declined'?'已取消':'下載失敗，請長按圖片儲存'}).then(function(){b.disabled=false})},'image/png')};
+b.onclick=function(){b.disabled=true;var fn='story-'+nm+'.png';c.toBlob(function(bl){if(!bl){m.textContent='產生失敗，請長按圖片儲存';b.disabled=false;return}
+if(DL){DL.save({filename:fn,data:bl}).then(function(){m.textContent='已儲存'},function(e){m.textContent=e&&e.code=='declined'?'已取消':'下載失敗，請長按圖片儲存'}).then(function(){b.disabled=false});return}
+var u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);m.textContent='已開始下載';b.disabled=false},'image/png')};
 w.appendChild(im);w.appendChild(b);w.appendChild(m);return w}
 function out(gs){var e=$('og');e.innerHTML='';gs.forEach(function(x){e.appendChild(shot(x[0],x[1]))});$('out').style.display='block';$('out').scrollIntoView({behavior:'smooth'})}
 $('e1').onclick=function(){out([[cfg,sel>=0?'v'+(sel+1):'custom']])};
