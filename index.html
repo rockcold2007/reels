@@ -38,6 +38,7 @@ canvas.m{width:100%;max-width:340px;aspect-ratio:9/16;border-radius:14px;border:
 #out{display:none;margin-top:18px}
 .og{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:8px}
 .og img{width:100%;border-radius:10px;display:block}
+.oi{display:grid;gap:6px}.oi .hint{margin:0;min-height:18px;text-align:center}button.dl{flex:none;width:100%;padding:10px}button.dl:disabled{opacity:.6}
 </style>
 </head>
 <body>
@@ -48,8 +49,8 @@ canvas.m{width:100%;max-width:340px;aspect-ratio:9/16;border-radius:14px;border:
 <label class="drop" for="f" id="dz">點此選擇影片截圖／封面圖</label>
 <input type="file" id="f" accept="image/*">
 <label class="l">標籤</label><input type="text" id="tag" value="新影片上線">
-<label class="l">標題</label><input type="text" id="t1" value="VIVIZ ‘Cliché’ 翻跳">
-<label class="l">副標</label><input type="text" id="t2" value="KPOP IN PUBLIC｜ONE TAKE｜Taiwan">
+<label class="l">標題</label><input type="text" id="t1" value="dance cover">
+<label class="l">副標</label><input type="text" id="t2" value="KPOP IN PUBLIC">
 <label class="l">底部提示（留空則不顯示）</label><input type="text" id="t3" value="點下方連結看完整影片">
 <h2>顏色</h2>
 <div class="row">
@@ -79,7 +80,7 @@ canvas.m{width:100%;max-width:340px;aspect-ratio:9/16;border-radius:14px;border:
 <button class="p" id="e1">輸出目前版面</button>
 <button class="p" id="e2" style="background:var(--fg);color:var(--bg)">輸出全部 20 種</button>
 </div>
-<div id="out"><p class="hint" style="margin-top:12px">長按圖片（電腦請按右鍵）即可儲存。</p><div class="og" id="og"></div></div>
+<div id="out"><p class="hint" id="dlh" style="margin-top:12px">按各張圖下方的「下載 PNG」即可儲存。</p><div class="og" id="og"></div></div>
 </section>
 </main>
 <script>
@@ -178,10 +179,14 @@ $('pick').onclick=function(){if(!o.img){$('dz').textContent='請先上傳圖片�
 var k=Math.max(best[0],best[1],best[2]);if(k<200){var f=200/Math.max(k,1);best=best.map(function(v){return v*f})}
 setCols(hex(R/n*.3,G/n*.3,B/n*.3),hex(best[0],best[1],best[2]),'#ffffff')};
 $('f').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var i=new Image();i.onload=function(){o.img=i;$('dz').textContent='已載入：'+f.name;draw()};i.src=r.result};r.readAsDataURL(f)});
-function shot(g){var c=document.createElement('canvas');c.width=1080;c.height=1920;render(c.getContext('2d'),g,1);var im=new Image();im.src=c.toDataURL('image/png');return im}
-function out(gs){var e=$('og');e.innerHTML='';gs.forEach(function(g){e.appendChild(shot(g))});$('out').style.display='block';$('out').scrollIntoView({behavior:'smooth'})}
-$('e1').onclick=function(){out([cfg])};
-$('e2').onclick=function(){out(PR.map(function(_,i){return mk(i)}))};
+var DL=null;
+if(window.claude&&claude.use)claude.use('downloads').then(function(d){DL=d;if(!d)$('dlh').textContent='此環境無法直接下載，請長按圖片儲存。'}).catch(function(){});
+function shot(g,nm){var c=document.createElement('canvas');c.width=1080;c.height=1920;render(c.getContext('2d'),g,1);var w=document.createElement('div');w.className='oi';var im=new Image();im.src=c.toDataURL('image/png');var b=document.createElement('button');b.className='p dl';b.textContent='下載 PNG';var m=document.createElement('div');m.className='hint';
+b.onclick=function(){if(!DL){m.textContent='此環境無法下載，請長按圖片儲存';return}b.disabled=true;c.toBlob(function(bl){DL.save({filename:'story-'+nm+'.png',data:bl}).then(function(){m.textContent='已儲存'},function(e){m.textContent=e&&e.code=='declined'?'已取消':'下載失敗，請長按圖片儲存'}).then(function(){b.disabled=false})},'image/png')};
+w.appendChild(im);w.appendChild(b);w.appendChild(m);return w}
+function out(gs){var e=$('og');e.innerHTML='';gs.forEach(function(x){e.appendChild(shot(x[0],x[1]))});$('out').style.display='block';$('out').scrollIntoView({behavior:'smooth'})}
+$('e1').onclick=function(){out([[cfg,sel>=0?'v'+(sel+1):'custom']])};
+$('e2').onclick=function(){out(PR.map(function(_,i){return [mk(i),'v'+(i+1)]}))};
 build();syncCtl();syncCol();draw();
 </script>
 </body>
